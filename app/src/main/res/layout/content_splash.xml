@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:background="@drawable/back3"
+
+    android:layout_height="match_parent"
+
+    tools:context=".Activities.SplashActivity"
+    tools:showIn="@layout/activity_splash">
+    <RelativeLayout android:orientation="vertical"
+        android:layout_margin="2dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <TextView
+            android:layout_width="267dp"
+            android:layout_height="443dp"
+            android:layout_centerInParent="true"
+            android:fontFamily="@font/font"
+            android:gravity="center"
+            android:text="وَالذَّاكِرِينَ اللَّهَ كَثِيرًا وَالذَّاكِرَاتِ أَعَدَّ اللَّهُ لَهُمْ مَغْفِرَةً وَأَجْرًا عَظِيمًا"
+            android:textColor="#FFFFFF"
+            android:textSize="50dp" />
+
+    </RelativeLayout>
+
+
+</RelativeLayout>
