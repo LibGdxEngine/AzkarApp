@@ -28,23 +28,12 @@
         </activity>
         <receiver
             android:name=".UseCases.MyBroadCastReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="XXXACTION" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".UseCases.StopBroadCastReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="YYYACTION" />
-            </intent-filter>
+            android:process=":remote" >
         </receiver>
 
-        <service android:name=".UseCases.ServiceStartAlarm" />
-        <service android:name=".UseCases.StopServiceClass" />
+        <service
+            android:name=".UseCases.MyService"
+            android:exported="false" />
     </application>
 
 </manifest>

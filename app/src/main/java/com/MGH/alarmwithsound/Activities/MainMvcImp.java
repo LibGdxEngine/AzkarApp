@@ -6,8 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
-
 import com.MGH.alarmwithsound.R;
 import com.MGH.alarmwithsound.UseCases.GlobalPrefrencies;
 import com.MGH.alarmwithsound.common.BaseObservableMvcView;
@@ -39,6 +37,7 @@ public class MainMvcImp extends BaseObservableMvcView<MainMvc.Listener> implemen
                     for(Listener listener : getmListeners()){
                         listener.onStopAlarmClicked();
                     }
+                    globalPrefrencies.setTime(30);
                     btnOnOff.setImageResource(R.drawable.btn_off);
                     alarmsON = false;
                     globalPrefrencies.storeIsDataSet(false);

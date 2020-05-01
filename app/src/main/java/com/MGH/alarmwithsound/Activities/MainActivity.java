@@ -1,7 +1,13 @@
 package com.MGH.alarmwithsound.Activities;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.Observer;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -19,11 +25,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.MGH.alarmwithsound.UseCases.BackgroundWorker;
 import com.MGH.alarmwithsound.UseCases.GlobalPrefrencies;
 import com.MGH.alarmwithsound.UseCases.MyBroadCastReceiver;
 import com.MGH.alarmwithsound.R;
 import com.MGH.alarmwithsound.UseCases.ServiceStartAlarm;
 import com.MGH.alarmwithsound.UseCases.StopServiceClass;
+
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements MainMvc.Listener {
 
@@ -34,13 +46,14 @@ public class MainActivity extends AppCompatActivity implements MainMvc.Listener 
     Intent intentStop,intentStart;
     PendingIntent pendingIntent,pintentStop;
     MainMvcImp mvcImp;
-
+    PeriodicWorkRequest periodicWorkRequest;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mvcImp = new MainMvcImp(getLayoutInflater() , null);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
 
         globalPrefrencies = new GlobalPrefrencies(this);
 
@@ -53,10 +66,65 @@ public class MainActivity extends AppCompatActivity implements MainMvc.Listener 
         pendingIntent = PendingIntent.getService(this, 0, intentStart, PendingIntent.FLAG_ONE_SHOT);
 
         setContentView(mvcImp.getRootView());
+
+
+
+
+    }
+    // Setup a recurring alarm every half hour
+    public void scheduleAlarm(int time) {
+        long interval = 30;
+        switch (time){
+            case 30:{
+                interval = AlarmManager.INTERVAL_HALF_HOUR;
+                break;
+            }
+            case 45:{
+                interval = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+                break;
+            }
+            case 60:{
+                interval = AlarmManager.INTERVAL_HOUR;
+                break;
+            }
+            case 120:{
+                interval = AlarmManager.INTERVAL_HALF_DAY;
+                break;
+            }
+        }
+
+        // Construct an intent that will execute the AlarmReceiver
+        Intent intent = new Intent(getApplicationContext(), MyBroadCastReceiver.class);
+        // Create a PendingIntent to be triggered when the alarm goes off
+        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyBroadCastReceiver.REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        // Setup periodic alarm every every half hour from this point onwards
+        long firstMillis = System.currentTimeMillis(); // alarm is set right away
+        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
+        // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, interval, pIntent);
+    }
+    public void cancelAlarm() {
+        Intent intent = new Intent(getApplicationContext(), MyBroadCastReceiver.class);
+        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyBroadCastReceiver.REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        alarm.cancel(pIntent);
+    }
+
+
+    private void startBackgroundWorker(int timeInMinute) {
+        periodicWorkRequest = new  PeriodicWorkRequest
+                .Builder(BackgroundWorker.class , 15 , TimeUnit.MINUTES)
+                .build();
+
+        WorkManager.getInstance(getApplicationContext()).enqueue(periodicWorkRequest);
     }
 
 
     private void runAlarmStartTime(int time) {
+        startBackgroundWorker(time);
         if(time != -1) {
             globalPrefrencies.storeMinsInterval(time);
 
@@ -77,22 +145,15 @@ public class MainActivity extends AppCompatActivity implements MainMvc.Listener 
 
     @Override
     public void onStartAlarmClicked(int alarmTime) {
-        runAlarmStartTime(alarmTime);
+        cancelAlarm();
+        scheduleAlarm(alarmTime);
     }
+
 
     @Override
     public void onStopAlarmClicked() {
         Toast.makeText(this, "تم اعادة ضبط اعدادات التنبيه", Toast.LENGTH_SHORT).show();
-        globalPrefrencies.storeMinsInterval(60);
-        assert alarmManager != null;
-        alarmManager.cancel(pendingIntent);
-        stopService(new Intent(this,ServiceStartAlarm.class));
-        try {
-
-            unregisterReceiver(myBroadCastReceiver);
-        }catch (Exception  e){
-            Log.e("XXX",e.getMessage());
-        }
+        cancelAlarm();
     }
 
     @Override
